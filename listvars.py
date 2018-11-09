@@ -6,20 +6,18 @@ import sys
 import tableprint as tp
 import types
 
+from listvars import resolve
 
-__all__ = ['listvars']
 
+labels = [
+    'name',
+    'type',
+    'shape',
+    'minmax',
+    'content',
+]
 
-def striptype(type):
-    """
-    Strip <class ''> from type string
-    """
-    rule = re.compile('<class \'(.*)\'>')
-    match = rule.search(type)
-    if match:
-        return match.group(1)
-    else:
-        return type
+contentwidth = 25
 
 
 def filtervars_sub(vdict, filtr):
@@ -78,18 +76,54 @@ def excludevars(vdict, filters):
     return vdict_filtered
 
 
-def listvars(filters=[], excl=[types.ModuleType, '^__.*']):
+def verifyfields(fields):
+    """
+    Verfiy the field labels
+    """
+    # Remove invalid fields
+    fields = [label.title() for label in fields if label.lower() in labels]
+
+    # Make sure name always exists and is in the first column
+    fields = ['Name'] + fields
+
+    # Each field is unique, set() changes order!
+    fields_unique = []
+    for i in fields:
+        if i not in fields_unique:
+            fields_unique.append(i)
+    fields = fields_unique
+
+    return fields
+
+
+def resolvefield(field, variable_name, variable):
+    """
+    Resolve variable to string by field
+    """
+    # Prevent clash with built-in function
+    if field == 'type':
+        field = 'dtype'
+    return getattr(resolve, field)(variable_name, variable,
+                                   maxwidth=contentwidth)
+
+
+def listvars(filters=[], excl=[types.ModuleType, types.FunctionType, '^__.*'],
+             fields=['name', 'type']):
     """
     List filtered global variables and their types
 
     Parameters
     ----------
-    filters : list
-        Outer list matches any variable name/type
-        Inner list matches all variable names/types
+    filters : list, optional
+        Outer list matches any variable name/type,
+        Inner list matches all variable names/types. Default is []
 
-    excl : list
-        Exclude filters (name or type)
+    excl : list, optional
+        Exclude filters (name or type). Default is
+        [types.ModuleType, types.FunctionType, '^__.*']
+
+    fields : list, optional
+        List of columns to display. Default is ['name', 'type']
 
     Notes
     -----
@@ -103,8 +137,8 @@ def listvars(filters=[], excl=[types.ModuleType, '^__.*']):
     # Build dictionary from global variables
     main = sys.modules['__main__']
     vdict = dict()
-    for name in sorted(dir(main)):
-        vdict[name] = getattr(main, name)
+    for var_name in sorted(dir(main)):
+        vdict[var_name] = getattr(main, var_name)
 
     # Filter dictionary
     if isinstance(filters, list) and filters:
@@ -118,22 +152,29 @@ def listvars(filters=[], excl=[types.ModuleType, '^__.*']):
         print('No variables match the filter')
         return
 
-    # Find cell widths
-    maxlen1 = len('Name')
-    maxlen2 = len('Type')
-    for varname, var in vdict.items():
-        if len(varname) > maxlen1:
-            maxlen1 = len(varname)
-        ty = striptype(str(type(var)))
-        if len(ty) > maxlen2:
-            maxlen2 = len(ty)
-    width = [maxlen1, maxlen2]
+    # Special field names
+    if fields == 'all':
+        fields = labels
+    elif fields == '':
+        fields = []
+    elif not isinstance(fields, list):
+        raise ValueError('Fields are invalid')
+
+    fields = verifyfields(fields)
+
+    # Build list from variables and fields
+    width = list(map(len, fields))
+    lines = []
+    for var in vdict.items():
+        line = [resolvefield(label.lower(), *var) for label in fields]
+        lines.append(line)
+        for i, w in enumerate(zip(width, list(map(len, line)))):
+            width[i] = max(w)
 
     # Draw chart
-    print(tp.header(['Name', 'Type'], width=width))
-    for varname, var in vdict.items():
-        print(tp.row([varname, striptype(str(type(var)))], width=width))
-    print(tp.bottom(2, width=width))
+    print(tp.header(fields, width=width))
+    print(*(tp.row(line, width=width) for line in lines), sep='\n')
+    print(tp.bottom(len(fields), width=width))
 
 
 if __name__ == '__main__':
