@@ -37,9 +37,11 @@ def minmax(variable_name, variable, **kwargs):
     Return minimum and maximum of variable as formatted string
     """
     try:
-        minmax = (min(variable), max(variable))
+        variable = np.array(variable)
+        minmax = (np.min(variable), np.max(variable))
     except Exception:
         return ''
+
     if all(isinstance(i, numbers.Number) for i in minmax):
         return f'({minmax[0]:.3g}, {minmax[1]:.3g})'
     else:
@@ -83,7 +85,10 @@ def content(variable_name, variable, maxwidth=25, **kwargs):
 
     # Remove new lines
     if content.find('\n') != -1:
-        content = content.replace('\n', '\\n')
+        if isinstance(variable, str):
+            content = content.replace('\n', '\\n')
+        else:
+            content = content.replace('\n', ' ')
 
     # Cur off long content
     if len(content) > maxwidth:

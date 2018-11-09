@@ -16,8 +16,3 @@ documentation of the listvars method.
 from .listvars import listvars, contentwidth
 
 __all__ = ['listvars', 'contentwidth']
-
-
-# Remove private objects
-resolve = None
-del resolve
