@@ -8,7 +8,14 @@ import types
 
 from listvars import resolve
 
+try:
+    from IPython.core.autocall import ZMQExitAutocall
+    ipython_types = [ZMQExitAutocall]
+except ImportError:
+    ipython_types = []
 
+
+# Available columns
 labels = [
     'name',
     'type',
@@ -17,7 +24,36 @@ labels = [
     'content',
 ]
 
-contentwidth = 25
+# Default filter
+filter_default = []
+
+# Exclude patterns
+excl_base = [
+    types.ModuleType,
+    types.FunctionType,
+    types.BuiltinFunctionType,
+    types.BuiltinMethodType,
+    types.MethodType,
+    '^__.*',
+]
+
+excl_ipython = [
+    'In',
+    'Out',
+    '_',
+    '_dh',
+    '_i(\\d*|ii)',
+    '_oh',
+    'get_ipython',
+] + ipython_types
+
+excl_default = excl_base + excl_ipython
+
+# Default fields
+fields_default = ['name', 'type', 'content']
+
+# Maximum width for content column
+content_width = 25
 
 
 def filtervars_sub(vdict, filtr):
@@ -104,11 +140,10 @@ def resolvefield(field, variable_name, variable):
     if field == 'type':
         field = 'dtype'
     return getattr(resolve, field)(variable_name, variable,
-                                   maxwidth=contentwidth)
+                                   maxwidth=content_width)
 
 
-def listvars(filters=[], excl=[types.ModuleType, types.FunctionType, '^__.*'],
-             fields=['name', 'type']):
+def listvars(filters=filter_default, excl=excl_default, fields=fields_default):
     """
     List filtered global variables and their types
 
@@ -116,14 +151,14 @@ def listvars(filters=[], excl=[types.ModuleType, types.FunctionType, '^__.*'],
     ----------
     filters : list, optional
         Outer list matches any variable name/type,
-        Inner list matches all variable names/types. Default is []
+        Inner list matches all variable names/types. Default is
+        filter_default
 
     excl : list, optional
-        Exclude filters (name or type). Default is
-        [types.ModuleType, types.FunctionType, '^__.*']
+        Exclude filters (name or type). Default is excl_default
 
     fields : list, optional
-        List of columns to display. Default is ['name', 'type']
+        List of columns to display. Default is fields_default
 
     Notes
     -----
