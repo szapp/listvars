@@ -6,14 +6,17 @@ import numpy as np
 import re
 
 
+# Pre-compile regular expression for performance
+rule = re.compile('<class \'(.*\\.)*([^\\.]*)\'>')
+
+
 def striptype(type):
     """
-    Strip <class ''> from type string
+    Strip <class ''> from type string and remove module prefixes
     """
-    rule = re.compile('<class \'(.*)\'>')
     match = rule.search(type)
     if match:
-        return match.group(1)
+        return match.group(2)
     else:
         return type
 
