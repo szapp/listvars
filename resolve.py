@@ -40,12 +40,12 @@ def minmax(variable_name, variable, **kwargs):
     Return minimum and maximum of variable as formatted string
     """
     try:
-        variable = np.array(variable)
-        minmax = (np.min(variable), np.max(variable))
+        varr = np.array(variable)
+        minmax = (np.min(varr), np.max(varr))
     except Exception:
         return ''
 
-    if all(isinstance(i, numbers.Number) for i in minmax):
+    if varr.size > 1 and all(isinstance(i, numbers.Number) for i in minmax):
         return f'({minmax[0]:.3g}, {minmax[1]:.3g})'
     else:
         return ''
