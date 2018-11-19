@@ -19,9 +19,8 @@ except ImportError:
 labels = [
     'name',
     'type',
-    'shape',
-    'minmax',
-    'content',
+    'size',
+    'value',
 ]
 
 # Default filter
@@ -50,10 +49,7 @@ excl_ipython = [
 excl_default = excl_base + excl_ipython
 
 # Default fields
-fields_default = ['name', 'type', 'content']
-
-# Maximum width for content column
-content_width = 25
+fields_default = 'all'
 
 
 def filtervars_sub(vdict, filtr):
@@ -139,8 +135,7 @@ def resolvefield(field, variable_name, variable):
     # Prevent clash with built-in function
     if field == 'type':
         field = 'dtype'
-    return getattr(resolve, field)(variable_name, variable,
-                                   maxwidth=content_width)
+    return getattr(resolve, field)(variable_name, variable)
 
 
 def listvars(filters=filter_default, excl=excl_default, fields=fields_default):

@@ -1,10 +1,14 @@
 """
 Collection of functions returning formatted strings for variables.
 """
+import collections
 import numbers
 import numpy as np
 import re
 
+
+# Maximum width for value column
+value_width = 25
 
 # Pre-compile regular expression for performance
 rule = re.compile('<class \'(.*\\.)*([^\\.]*)\'>')
@@ -32,6 +36,8 @@ def dtype(variable_name, variable, **kwargs):
     """
     Return type of variable as formatted string
     """
+    if isinstance(variable, np.ndarray):
+        return str(variable.dtype)
     return striptype(str(type(variable)))
 
 
@@ -41,64 +47,78 @@ def minmax(variable_name, variable, **kwargs):
     """
     try:
         varr = np.array(variable)
-        minmax = (np.min(varr), np.max(varr))
+        mm = (np.min(varr), np.max(varr))
     except Exception:
         return ''
 
-    if varr.size > 1 and all(isinstance(i, numbers.Number) for i in minmax):
-        return f'({minmax[0]:.3g}, {minmax[1]:.3g})'
+    if varr.size > 1 and all(isinstance(i, numbers.Number) for i in mm):
+        return f'min: {mm[0]:.3g}, max: {mm[1]:.3g}'
     else:
         return ''
 
 
-def shape(variable_name, variable, **kwargs):
+def size(variable_name, variable, **kwargs):
     """
-    Return shape/length of variable as formatted string
+    Return size/shape of variable as formatted string
     """
-    if isinstance(variable, str):
-        return f'len({str(len(variable))})'
+    if isinstance(variable, str) or isinstance(variable, collections.Mapping):
+        return str(len(variable))
 
     try:
-        shape = np.array(variable).shape
-        if shape is not ():
-            return str(shape)
+        size = np.array(variable).shape
+        if size is not ():
+            return str(size)
         else:
             return ''
     except Exception:
         return ''
 
 
-def content(variable_name, variable, maxwidth=25, **kwargs):
+def setvaluewidth(val):
     """
-    Return content of variable as formatted string
+    Set the maximum width of the value column
     """
+    global value_width
+    if isinstance(val, numbers.Number):
+        value_width = val
+
+
+def value(variable_name, variable, **kwargs):
+    """
+    Return value of variable as formatted string
+    """
+    # Show min-max for list types
+    mm = minmax(variable_name, variable, **kwargs)
+    if mm:
+        return mm
+
     # Appropriate number formatting
     if isinstance(variable, numbers.Number):
         return f'{variable:.3g}'
 
-    # Object to-string function
+    # To-string method
     try:
-        content = variable.__str__()
+        value = variable.__str__()
     except Exception:
         return ''
 
-    # Remove object contents
-    if content.startswith('<') and content.endswith('>'):
+    # Remove object identifier
+    if value.startswith('<') and value.endswith('>'):
         return ''
 
     # Remove new lines
-    if content.find('\n') != -1:
+    if value.find('\n') != -1:
         if isinstance(variable, str):
-            content = content.replace('\n', '\\n')
+            value = value.replace('\n', '\\n')
         else:
-            content = content.replace('\n', ' ')
+            value = value.replace('\n', ' ')
 
-    # Cur off long content
-    if len(content) > maxwidth:
-        content = content[:maxwidth] + '...'
+    # Trim long values
+    if len(value) > value_width:
+        value = value[:value_width] + '…'
 
     # Wrap strings in quotes
     if isinstance(variable, str):
-        content = f'\'{content}\''
+        value = f'\'{value}\''
 
-    return content
+    return value

@@ -15,7 +15,6 @@ documentation of the listvars method.
 
 from .listvars import (
     listvars,
-    content_width,
     filter_default,
     excl_base,
     excl_ipython,
@@ -23,9 +22,14 @@ from .listvars import (
     fields_default,
 )
 
+from .resolve import (
+    setvaluewidth,
+)
+
+
 __all__ = [
     'listvars',
-    'content_width',
+    'setvaluewidth',
     'filter_default',
     'excl_base',
     'excl_ipython',
