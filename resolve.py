@@ -62,7 +62,11 @@ def size(variable_name, variable, **kwargs):
     Return size/shape of variable as formatted string
     """
     if isinstance(variable, str) or isinstance(variable, collections.Mapping):
-        return str(len(variable))
+        try:
+            return str(len(variable))
+        except ValueError:
+            # Closed h5py handle
+            return ''
 
     try:
         size = np.array(variable).shape
