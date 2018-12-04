@@ -202,9 +202,7 @@ def listvars(filters=filter_default, excl=excl_default, fields=fields_default):
             width[i] = max(w)
 
     # Draw chart
-    print(tp.header(fields, width=width))
-    print(*(tp.row(line, width=width) for line in lines), sep='\n')
-    print(tp.bottom(len(fields), width=width))
+    tp.table(lines, fields, width=width)
 
 
 if __name__ == '__main__':
