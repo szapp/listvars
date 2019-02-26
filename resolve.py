@@ -67,6 +67,9 @@ def size(variable_name, variable, **kwargs):
         except ValueError:
             # Closed h5py handle
             return ''
+        except TypeError:
+            # Closed h5py handle
+            return ''
 
     try:
         size = np.array(variable).shape
