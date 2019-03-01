@@ -138,7 +138,8 @@ def resolvefield(field, variable_name, variable):
     return getattr(resolve, field)(variable_name, variable)
 
 
-def listvars(filters=filter_default, excl=excl_default, fields=fields_default):
+def listvars(filters=filter_default, excl=excl_default, fields=fields_default,
+             vars=None):
     """
     List filtered global variables and their types
 
@@ -155,6 +156,10 @@ def listvars(filters=filter_default, excl=excl_default, fields=fields_default):
     fields : list, optional
         List of columns to display. Default is fields_default
 
+    vars : dict, optional
+        Provide a dict of variables instead of inferring the locals.
+        Default is None.
+
     Notes
     -----
     String filters/exclude patterns are matched with regular expressions
@@ -164,11 +169,17 @@ def listvars(filters=filter_default, excl=excl_default, fields=fields_default):
     types) and/or another list defining a group in which all filters
     must match. For more details, see the README.md
     """
-    # Build dictionary from global variables
-    main = sys.modules['__main__']
+    # Build dictionary from global or supplied dict of variables
     vdict = dict()
-    for var_name in sorted(dir(main)):
-        vdict[var_name] = getattr(main, var_name)
+    if vars is None:
+        main = sys.modules['__main__']
+        for var_name in sorted(dir(main)):
+            vdict[var_name] = getattr(main, var_name)
+    elif isinstance(vars, type(dict())):
+        for var_name in sorted(vars.keys()):
+            vdict[var_name] = vars.get(var_name, None)
+    else:
+        raise ValueError('The provided vars is not a dictionary')
 
     # Filter dictionary
     if isinstance(filters, list) and filters:
