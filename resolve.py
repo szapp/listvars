@@ -37,7 +37,10 @@ def dtype(variable_name, variable, **kwargs):
     Return type of variable as formatted string
     """
     if isinstance(variable, np.ndarray):
-        return str(variable.dtype)
+        if variable.dtype.names:
+            return str(variable.dtype.names)
+        else:
+            return str(variable.dtype)
     return striptype(str(type(variable)))
 
 
@@ -72,9 +75,9 @@ def size(variable_name, variable, **kwargs):
             return ''
 
     try:
-        size = np.array(variable).shape
-        if size is not ():
-            return str(size)
+        sze = np.array(variable).shape
+        if sze != ():
+            return str(sze)
         else:
             return ''
     except Exception:
