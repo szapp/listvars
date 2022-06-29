@@ -38,10 +38,19 @@ def dtype(variable_name, variable, **kwargs):
     """
     if isinstance(variable, np.ndarray):
         if variable.dtype.names:
-            return str(variable.dtype.names)
+            tp = str(variable.dtype.names)
         else:
-            return str(variable.dtype)
-    return striptype(str(type(variable)))
+            tp = str(variable.dtype)
+    else:
+        tp = striptype(str(type(variable)))
+
+    # Trim long type names
+    if len(tp) > value_width:
+        tp = tp[:value_width] + '…'
+        if tp.count('\'') % 2 == 1:
+            tp += '\''
+
+    return tp
 
 
 def minmax(variable_name, variable, **kwargs):
@@ -49,7 +58,7 @@ def minmax(variable_name, variable, **kwargs):
     Return minimum and maximum of variable as formatted string
     """
     try:
-        varr = np.array(variable)
+        varr = np.asarray(variable, 'O')
         mm = (np.min(varr), np.max(varr))
     except Exception:
         return ''
@@ -75,7 +84,7 @@ def size(variable_name, variable, **kwargs):
             return ''
 
     try:
-        sze = np.array(variable).shape
+        sze = np.asarray(variable, 'O').shape
         if sze != ():
             return str(sze)
         else:
@@ -93,7 +102,7 @@ def setvaluewidth(val):
         value_width = val
 
 
-def value(variable_name, variable, **kwargs):
+def value(variable_name, variable, **kwargs):  # noqa: C901
     """
     Return value of variable as formatted string
     """
@@ -126,6 +135,8 @@ def value(variable_name, variable, **kwargs):
     # Trim long values
     if len(value) > value_width:
         value = value[:value_width] + '…'
+        if value.count('\'') % 2 == 1:
+            value += '\''
 
     # Wrap strings in quotes
     if isinstance(variable, str):

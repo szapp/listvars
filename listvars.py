@@ -1,6 +1,7 @@
 """
 List all global variables with additional filtering options.
 """
+import os
 import re
 import sys
 import tableprint as tp
@@ -138,8 +139,8 @@ def resolvefield(field, variable_name, variable):
     return getattr(resolve, field)(variable_name, variable)
 
 
-def listvars(filters=filter_default, excl=excl_default, fields=fields_default,
-             vars=None):
+def listvars(filters=filter_default, excl=excl_default,  # noqa: C901
+             fields=fields_default, vars=None):
     """
     List filtered global variables and their types
 
@@ -211,6 +212,29 @@ def listvars(filters=filter_default, excl=excl_default, fields=fields_default,
         lines.append(line)
         for i, w in enumerate(zip(width, list(map(len, line)))):
             width[i] = max(w)
+
+    # Reduce to maximum width
+    max_width = int(os.environ.get('COLUMNS', '999'))
+    space = max_width - (sum(width) + len(width) * 3 + 1)
+    if space < 0:
+        opt = int((max_width - (len(width) * 3 + 1)) / len(width))
+        pool = 0
+        large = []
+        for i, w in enumerate(width):
+            if w <= opt:
+                pool += opt - w
+            else:
+                large.append(i)
+        donate = int(pool / len(large))
+        for i in large:
+            width[i] = opt + donate
+
+        for ll in lines:
+            for i in large:
+                if len(ll[i]) > opt + donate - 2:
+                    ll[i] = ll[i][:opt + donate - 2] + '…'
+                if ll[i].count('\'') % 2 == 1:
+                    ll[i] += '\''
 
     # Draw chart
     tp.table(lines, fields, width=width)
